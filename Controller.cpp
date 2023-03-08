@@ -5,65 +5,65 @@
 //Button (Pin Number, Command, Note Number, Channel)
 Button::Button(byte pin, byte command, byte channel, byte _debounce)
 {
-  _debounce = 5;
+	_debounce = 5;
 	_pin = pin;
+  _hasMux = false;
 	pinMode(_pin, INPUT_PULLUP);
-	MidiCommand = command;
-	MidiChannel = channel;
-  updatePin();
-	_oldValue = _value;
-	_time = 0;
-  haschanged = false;
-}
-
-Button::Button(byte pin, byte command, byte channel, byte _debounce, Mux *mux)
-{
-  _debounce = 5;
-	_pin = pin;
-  *_mux = *mux;
-  _hasMux = true;
 	MidiCommand = command;
 	MidiChannel = channel;
 	updatePin();
 	_oldValue = _value;
 	_time = 0;
-  haschanged = false;
+	haschanged = false;
+}
+
+Button::Button(byte pin, byte command, byte channel, byte _debounce, Mux *mux)
+{
+	_debounce = 5;
+	_pin = pin;
+	*_mux = *mux;
+	_hasMux = true;
+	MidiCommand = command;
+	MidiChannel = channel;
+	updatePin();
+	_oldValue = _value;
+	_time = 0;
+	haschanged = false;
 }
 
 void Button::updatePin()
 {
-  if ( _hasMux == true ){
-    _value = _mux->read(_pin);
-  }
-  else {
-    _value = digitalRead(_pin);
-  }
+	if ( _hasMux == true ){
+		_value = _mux->read(_pin);
+	}
+	else {
+		_value = digitalRead(_pin);
+	}
 }
 
-bool Button::getValue()
+void Button::getValue()
 {
-	if (millis() - _time > _debounce){
-    updatePin();
-    _time = millis();
-    if (_value == 1 && _value != _oldValue){
-      MidiValue = 0;
-      haschanged = true;
-      _oldValue = _value;
-    }
-    else if (_value == 0 && _value != _oldValue){
-      MidiValue = 127;
-      haschanged = true;
-      _oldValue = _value;      
-    }
-    else if (_value != _oldValue){
-      haschanged = false;
-      _oldValue = _value; 
-    }
-  }
-  else {
-    haschanged = false;
-  }
-  return haschanged;
+	if (millis() > _debounce + _time){
+		updatePin();
+		_time = millis();
+		if (_value == 1 && _value != _oldValue){
+			MidiValue = 0;
+			haschanged = true;
+			_oldValue = _value;
+		}
+		else if (_value == 0 && _value != _oldValue){
+			MidiValue = 127;
+			haschanged = true;
+			_oldValue = _value;			
+		}
+		else if (_value == _oldValue){
+			haschanged = false;
+			_oldValue = _value; 
+		}
+	}
+	else {
+		haschanged = false;
+	}
 }
 
 
@@ -78,9 +78,9 @@ void Button::newValue(byte command, byte value, byte channel)
 Pot::Pot(byte pin, byte command, byte channel)
 {
 	_pin = pin;
-  _hasMux = false;
+	_hasMux = false;
 	updatePin();
-  _oldValue = _value;
+	_oldMidiValue = MidiValue;
 	MidiCommand = command;
 	MidiChannel = channel;
 }
@@ -88,37 +88,36 @@ Pot::Pot(byte pin, byte command, byte channel)
 Pot::Pot(byte pin, byte command, byte channel, Mux *mux)
 {
 	_pin = pin;
-  *_mux = *mux;
-  _hasMux = true;
+	_mux = mux;
+	_hasMux = true;
 	updatePin();
-	_oldValue = _value;
+	_oldMidiValue = MidiValue;
 	MidiCommand = command;
 	MidiChannel = channel;
 }
 
 void Pot::updatePin(){
-  if ( _hasMux == true ){
-	  _value = _mux->read(_pin);
+	if ( _hasMux == true ){
+		_value = _mux->read(_pin);
 
-  }
-  else {
-    _value = analogRead(_pin); 
-  }
-  // division to convert 10bits to 8bits (bytes)
-  MidiValue = _value / 8;
+	}
+	else {
+		_value = analogRead(_pin); 
+	}
+	// division to convert 10bits to 8bits (bytes)
+	MidiValue = _value / 8;
 }
 
-bool Pot::getValue()
+void Pot::getValue()
 {
-  updatePin();
-	if (_value != _oldValue) {
-    _oldValue = _value;
-    haschanged == true;
+	updatePin();
+	if (MidiValue  > _oldMidiValue + 2 || MidiValue  < _oldMidiValue - 2) {
+		_oldMidiValue = MidiValue;
+		haschanged = true;
 	}
-  else {
-    haschanged == false;
-  }
-  return haschanged;
+	else {
+		haschanged = false;
+	}
 }
 
 void Pot::newValue(byte command, byte value, byte channel) {
@@ -145,7 +144,7 @@ Encoder::Encoder(byte muxpinA, byte muxpinB, byte command, byte channel, Mux *mu
 	_pinA = muxpinA;
 	_pinB = muxpinB;
 	*_mux = *mux;
-  _hasMux = true;
+	_hasMux = true;
 	updatePin();
 	_oldStatePinA = _statePinA;
 	_oldStatePinB = _statePinB;
@@ -156,30 +155,30 @@ Encoder::Encoder(byte muxpinA, byte muxpinB, byte command, byte channel, Mux *mu
 
 void Encoder::updatePin()
 {
-  if ( _hasMux == true ){
-    _statePinA = _mux->read(_pinA);
-    _statePinB = _mux->read(_pinB);
-  }
-  else {
-    _statePinA = digitalRead(_pinA);
-	  _statePinB = digitalRead(_pinB);
-  }
+	if ( _hasMux == true ){
+		_statePinA = _mux->read(_pinA);
+		_statePinB = _mux->read(_pinB);
+	}
+	else {
+		_statePinA = digitalRead(_pinA);
+		_statePinB = digitalRead(_pinB);
+	}
 }
 
 // bool Encoder::getValue()
 // {
-//   updatePin()
+//	 updatePin()
 // 	if ( _statePinA != _oldStatePinA ){
 // 		if ( _statePinB != _oldStatePinB ){
-//       if ( MidiValue < 127 ){
-// 			  MidiValue++;
-//       }
+//			 if ( MidiValue < 127 ){
+// 				MidiValue++;
+//			 }
 // 		}
 // 		else{
-//       if ( MidiValue > 0 ){
-// 			  MidiValue--;
-//       }
-//     }
+//			 if ( MidiValue > 0 ){
+// 				MidiValue--;
+//			 }
+//		 }
 // 	}
 // 	_oldStatePinA = _statePinA;
 // 	_oldStatePinB = _statePinB;
