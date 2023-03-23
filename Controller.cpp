@@ -1,4 +1,3 @@
-
 #include "Controller.h"
 //****************************************************************************************
 //************ MIDI **********************************************************************
@@ -20,6 +19,7 @@ MidiButton::MidiButton(byte pin, byte command, bool toggle, byte channel, byte d
 	_oldValue = _value;
 	_time = 0;
 	haschanged = false;
+  MidiValue = 0;
 }
 
 MidiButton::MidiButton(byte pin, byte command, bool toggle, byte channel, byte debounce, Mux *mux)
@@ -35,6 +35,7 @@ MidiButton::MidiButton(byte pin, byte command, bool toggle, byte channel, byte d
 	_oldValue = _value;
 	_time = 0;
 	haschanged = false;
+  MidiValue = 0;
 }
 
 void MidiButton::updatePin()
@@ -54,12 +55,12 @@ void MidiButton::getValue()
 		_time = millis();
     if (_toggle == false){
       if (_value == LOW && _value != _oldValue){
-        MidiValue = 0;
+        MidiValue = 127;
         haschanged = true;
         _oldValue = _value;
       }
       else if (_value == HIGH && _value != _oldValue){
-        MidiValue = 127;
+        MidiValue = 0;
         haschanged = true;
         _oldValue = _value;			
       }
@@ -68,19 +69,24 @@ void MidiButton::getValue()
         _oldValue = _value; 
       }
     }
-    else if (_toggle == false){
-      if (_value == HIGH && _value != _oldValue){
-          if (MidiValue == 127){
-            MidiValue = 0;
-            haschanged = true;
-          }
-          else if (MidiValue == 0){
+    else if (_toggle == true){
+      if (_value == LOW){
+        if (_value != _oldValue && pressed == false){
+          haschanged = true;
+          if (MidiValue == 0){
             MidiValue = 127;
-            haschanged = true;
           }
-          _oldValue = _value;
+          else {
+            MidiValue = 0;
+          }
+        }
+        else {
+          haschanged = false;
+        } 
+        pressed = true;       
       }
-      else {
+      if (_value == HIGH){
+        pressed = false;
         haschanged = false;
       }
     }
@@ -146,7 +152,7 @@ void MidiPot::getValue()
 
 void MidiPot::newValue(byte command, byte value, byte channel) {
 	MidiCommand = command;
-	_value = value;
+	MidiValue = value;
 	MidiChannel = channel;
 }
 
@@ -194,12 +200,12 @@ void MidiEncoder::getValue()
 	updatePin();
 	if ( _statePinA != _oldStatePinA ){
 		if ( _statePinB != _oldStatePinB ){
-			 if ( MidiValue < 127 ){
+			if ( MidiValue < 127 ){
 				MidiValue++;
 			 }
 		}
 		else{
-			 if ( MidiValue > 0 ){
+			if ( MidiValue > 0 ){
 				MidiValue--;
 			 }
 		 }
@@ -230,6 +236,10 @@ ServiceButton::ServiceButton(byte pin, bool toggle, byte debounce)
   _oldValue = _value;
 	_time = 0;
 	haschanged = false;
+  pressed = false;
+	pressedDouble = false;
+	pressedLong = false;
+  serviceValue = 0;
 }
 
 ServiceButton::ServiceButton(byte pin, bool toggle, byte debounce, Mux *mux)
@@ -243,6 +253,10 @@ ServiceButton::ServiceButton(byte pin, bool toggle, byte debounce, Mux *mux)
   _oldValue = _value;
 	_time = 0;
 	haschanged = false;
+  pressed = false;
+	pressedDouble = false;
+	pressedLong = false;
+  serviceValue = 0; 
 }
 
 void ServiceButton::updatePin()
@@ -262,39 +276,39 @@ void ServiceButton::getValue()
 		_time = millis();
     if (_toggle == false){
       if (_value == LOW && _value != _oldValue){
-        serviceValue = 0;
-        haschanged = true;
-        _oldValue = _value;
-      }
-      else if (_value == HIGH && _value != _oldValue){
         serviceValue = 127;
         haschanged = true;
-        _oldValue = _value;			
+      }
+      else if (_value == HIGH && _value != _oldValue){
+        serviceValue = 0;
+        haschanged = true;		
       }
       else if (_value == _oldValue){
         haschanged = false;
-        _oldValue = _value; 
       }
     }
     else if (_toggle == true){
-      if (_value == HIGH && _value != _oldValue){
-          if (serviceValue == 127){
-            serviceValue = 0;
-            haschanged = true;
-          }
-          else if (serviceValue == 0){
+      if (_value == LOW){
+        if (_value != _oldValue && pressed == false){
+          haschanged = true;
+          if (serviceValue == 0){
             serviceValue = 127;
-            haschanged = true;
           }
-          _oldValue = _value;
+          else {
+            serviceValue = 0;
+          }
+        }
+        else {
+          haschanged = false;
+        } 
+        pressed = true;       
       }
-      else {
+      if (_value == HIGH){
+        pressed = false;
         haschanged = false;
       }
     }
-	}
-	else {
-		haschanged = false;
+    _oldValue = _value;
 	}
 }
 
@@ -350,17 +364,18 @@ void ServicePot::newValue(byte value) {
 }
 
 //********************************************************************
-ServiceEncoder::ServiceEncoder(byte pinA, byte pinB)
+ServiceEncoder::ServiceEncoder(byte pinA, byte pinB, bool eincremental)
 {
 	_pinA = pinA;
 	_pinB = pinB;
 	updatePin();
 	_oldStatePinA = _statePinA;
 	_oldStatePinB = _statePinB;
+  incremental = eincremental;
 	serviceValue = 0;
 }
 
-ServiceEncoder::ServiceEncoder(byte muxpinA, byte muxpinB, Mux *mux)
+ServiceEncoder::ServiceEncoder(byte muxpinA, byte muxpinB, bool eincremental, Mux *mux)
 {
 	_pinA = muxpinA;
 	_pinB = muxpinB;
@@ -369,6 +384,7 @@ ServiceEncoder::ServiceEncoder(byte muxpinA, byte muxpinB, Mux *mux)
 	updatePin();
 	_oldStatePinA = _statePinA;
 	_oldStatePinB = _statePinB;
+  incremental = eincremental;
 	serviceValue = 0;
 }
 
@@ -387,16 +403,32 @@ void ServiceEncoder::updatePin()
 void ServiceEncoder::getValue()
 {
 	updatePin();
-	if ( _statePinA != _oldStatePinA ){
-		if ( _statePinB != _oldStatePinB ){
-			serviceValue = 1;
-		}
-		else{
-			serviceValue = 2;
-		 }
-	}
+  if ( incremental == true){
+    if ( _statePinA != _oldStatePinA ){
+      if ( _statePinB != _oldStatePinB ){
+        serviceValue = 1;
+      }
+      else{
+        serviceValue = 2;
+      }
+    }
+    else{
+      serviceValue = 0;
+    }
+  }
   else {
-    serviceValue = 0;
+    if ( _statePinA != _oldStatePinA ){
+      if ( _statePinB != _oldStatePinB ){
+        if ( serviceValue < 2147483647 ){
+          serviceValue++;
+        }
+      }
+      else{
+        if ( serviceValue > 0 ){
+          serviceValue--;
+        }
+      }
+    }
   }
 	_oldStatePinA = _statePinA;
 	_oldStatePinB = _statePinB;

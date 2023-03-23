@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include "Mux.h"
+#include <CommonBusEncoders.h>
+
 using namespace admux;
 
 //************************************************************************
@@ -18,6 +20,7 @@ class MidiButton
 		byte MidiChannel;
 		byte MidiCommand;
 		byte MidiValue;
+		bool pressed;
 		bool haschanged;
 
 	private:
@@ -87,6 +90,12 @@ class ServiceButton
 		void getValue();
 		byte serviceValue;
 		bool haschanged;
+		bool pressed;
+		bool pressedLong;
+		bool pressedDouble;
+    byte _value;
+    byte _oldValue;
+    bool _toggle;
 
 	private:
 		byte _pin;
@@ -94,9 +103,9 @@ class ServiceButton
 		bool _hasMux;
 		byte _debounce;
 		int _time;
-    byte _value;
-    byte _oldValue;
-    bool _toggle;
+		bool _debouncePL;
+		bool _debouncePD;
+    
 };
 //*************************************************************************
 class ServicePot
@@ -121,13 +130,14 @@ class ServicePot
 class ServiceEncoder
 {
 	public:
-		ServiceEncoder(byte pinA, byte pinB);
-		ServiceEncoder(byte pinA, byte pinB, Mux *mux);
+		ServiceEncoder(byte pinA, byte pinB, bool incremental);
+		ServiceEncoder(byte pinA, byte pinB, bool incremental, Mux *mux);
 		void updatePin();
 		void newValue(byte value);
 		void getValue();
-		byte serviceValue;
+		int serviceValue;
 		bool haschanged;
+    bool incremental;
 
 	private:
 		byte _pinA;
