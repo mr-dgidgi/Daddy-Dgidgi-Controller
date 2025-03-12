@@ -107,9 +107,41 @@ const int NUMPOTMUX = 3;
 
 //***DEFINE REFERENCE OCTAVE*************************
 //
-short OCTAVE = 5;
+byte OCTAVE = 5;
 //*******************************************************************
 
+//***DEFINE CHANNEL VAR*************************
+//
+byte CHANNEL = 1;
+//*******************************************************************
+
+//***DEFINE TEMPO RELATED VARIABLES*************************
+//
+byte BPM;
+int BPMINTERVAL = 60000 / (BPM * 24);
+unsigned long MILLISPREV = 0;
+//*******************************************************************
+
+//***DEFINE EACH CHANNEL VOLUME*************************
+//
+byte VOLCHANNEL1 = 0;
+byte VOLCHANNEL2 = 0;
+byte VOLCHANNEL3 = 0;
+byte VOLCHANNEL4 = 0;
+byte VOLCHANNEL5 = 0;
+byte VOLCHANNEL6 = 0;
+byte VOLCHANNEL7 = 0;
+byte VOLCHANNEL8 = 0;
+byte VOLCHANNEL9 = 0;
+byte VOLCHANNEL10 = 0;
+byte VOLCHANNEL11 = 0;
+byte VOLCHANNEL12 = 0;
+byte VOLCHANNEL13 = 0;
+byte VOLCHANNEL14 = 0;
+byte VOLCHANNEL15 = 0;
+byte VOLCHANNEL16 = 0;
+byte LISTVOLCHANNEL[] {VOLCHANNEL1,VOLCHANNEL2,VOLCHANNEL3,VOLCHANNEL4,VOLCHANNEL5,VOLCHANNEL6,VOLCHANNEL7,VOLCHANNEL8,VOLCHANNEL9,VOLCHANNEL10,VOLCHANNEL11,VOLCHANNEL12,VOLCHANNEL13,VOLCHANNEL14,VOLCHANNEL15,VOLCHANNEL16};
+//*******************************************************************
 
 //***DEFINE LED FOR MIDI INPUT***************************************
 // useful if you want visual return
@@ -137,7 +169,7 @@ void setup() {
 	// MIDI.setHandleContinue(handleContinue);
 	// MIDI.setHandleClock(handleClock);
   
-	 MIDI.begin(1);
+	 MIDI.begin(MIDI_CHANNEL_OMNI);
 // If Arduino Uno / Mega
 //  Serial.begin(38400);
 	//disable midi throuput
@@ -147,6 +179,17 @@ void setup() {
 
 void loop() {
 
+  //*************************************
+  // Clock
+  unsigned long MillisCurrent = millis();
+  if (MillisCurrent - MILLISPREV >= BPMINTERVAL) {
+      MILLISPREV = MillisCurrent; // Met à jour le dernier envoi
+      MIDI.sendClock();
+  }  
+  //*************************************
+
+  //*************************************
+  // Check Controls
   for (int i = 0; i < NUMBUTTONMUX; i++){
     buttonprint(ListButtonMux[i]);
   }
@@ -166,16 +209,9 @@ void loop() {
   for (int i = 0; i < NUMPOT; i++){
     potprint(ListPot[i]);
   }
-  // Update all entry  
-	// if (NUMBER_MIDI_BUTTONS != 0) updateButtons();
-	// if (NUMBER_MIDI_POTS != 0) updateMidiPots();
+  //*************************************
 
-  // Update LED status
-  // ServiceButtonToggleLed(BU2, LED_BU2);
-
-  // Midi read message
 	MIDI.read();
-	
 }
 
 
@@ -224,7 +260,7 @@ void keyprint(Key MyKey) {
   }
 }
 
-void midisendkey(Key MyKey, int MyNote, short MyOctave, int MyVelocity, int MyChannel) {
+void midisendkey(Key MyKey, int MyNote, byte MyOctave, int MyVelocity, byte MyChannel) {
   // check the button status
   const auto event = MyKey.check();
   switch(event) {
@@ -243,5 +279,56 @@ void potprint(Potentiometer MyPot) {
   // check the button status
   if (MyPot.check() == Potentiometer::Event::Changed){
     Serial.println(MyPot.read());
+  }
+}
+
+void midisendcc(Potentiometer MyPot, int MyCC, byte MyChannel) {
+  // check the button status
+  if (MyPot.check() == Potentiometer::Event::Changed){
+    MIDI.sendControlChange(MyCC, MyPot.read(), MyChannel);
+  }
+}
+
+void setvolume(Potentiometer MyPot, byte MyVolChannel){
+  // check the button status
+  if (MyPot.check() == Potentiometer::Event::Changed){
+    MyVolChannel = MyPot.read()*2;
+  }
+}
+
+void setoctave(bool MyModifier){
+  if (MyModifier == true){
+    if (OCTAVE <8){
+      OCTAVE = OCTAVE++;
+    } 
+    return OCTAVE;
+  }
+  else if (MyModifier == false) {
+    if (OCTAVE >1){
+      OCTAVE = OCTAVE--;
+    }
+    return OCTAVE;
+  }
+}
+
+void setchannel(bool MyModifier){
+  if (MyModifier == true){
+    if (CHANNEL <16){
+      CHANNEL = CHANNEL++;
+    } 
+    return CHANNEL;
+  }
+  else if (MyModifier == false) {
+    if (CHANNEL >1){
+      CHANNEL = CHANNEL--;
+    }
+    return CHANNEL;
+  }
+}
+
+void setbpm(int MyValue){
+  if (BPM > 50 && BPM < 300){
+    BPM = BPM + MyValue;
+    BPMINTERVAL = 60000 / (BPM * 24);
   }
 }
