@@ -48,18 +48,18 @@ USBMIDI_CREATE_DEFAULT_INSTANCE();
 //***DEFINE DIRECTLY CONNECTED BUTTONS*******************************
 //
 
-// auto Button1 = Button(0);
-// auto Button2 = Button(1);
-// auto Button3 = Button(2);
+// const auto Button1 = Button(0);
+// const auto Button2 = Button(1);
+// const auto Button3 = Button(2);
 Button ListButton[] {};
 const int NUMBUTTON = 0;
 
 //***DEFINE  BUTTONS CONNECTED TO MULTIPLEXER*************************
 //
 
-auto Button1 = Button(MuxDigi, 0);
-auto Button2 = Button(MuxDigi, 1);
-auto Button3 = Button(MuxDigi, 2);
+const auto Button1 = Button(MuxDigi, 0);
+const auto Button2 = Button(MuxDigi, 1);
+const auto Button3 = Button(MuxDigi, 2);
 
 Button ListButtonMux[] {Button1,Button2,Button3};
 const int NUMBUTTONMUX = 3;
@@ -68,18 +68,18 @@ const int NUMBUTTONMUX = 3;
 //***DEFINE DIRECTLY CONNECTED KEYS*******************************
 //
 
-// auto Key1 = Key(0);
-// auto Key2 = Key(1);
-// auto Key3 = Key(2);
+// const auto Key1 = Key(0);
+// const auto Key2 = Key(1);
+// const auto Key3 = Key(2);
 Key ListKey[] {};
 const int NUMKEY = 0;
 
 //***DEFINE  KEYS CONNECTED TO MULTIPLEXER*************************
 //
 
-auto Key1 = Key(MuxDigi, 3);
-auto Key2 = Key(MuxDigi, 4);
-auto Key3 = Key(MuxDigi, 5);
+const auto Key1 = Key(MuxDigi, 3);
+const auto Key2 = Key(MuxDigi, 4);
+const auto Key3 = Key(MuxDigi, 5);
 
 Key ListKeyMux[] {Key1,Key2,Key3};
 const int NUMKEYMUX = 3;
@@ -88,21 +88,26 @@ const int NUMKEYMUX = 3;
 //***DEFINE DIRECTLY CONNECTED POTS*******************************
 //
 
-// auto Pot1 = Potentiometer(0);
-// auto Pot2 = Potentiometer(1);
-// auto Pot3 = Potentiometer(2);
+// const auto Pot1 = Potentiometer(0);
+// const auto Pot2 = Potentiometer(1);
+// const auto Pot3 = Potentiometer(2);
 Potentiometer ListPot[] {};
 const int NUMPOT = 0;
 
 //***DEFINE POTS CONNECTED TO MULTIPLEXER*************************
 //
 
-auto Pot1 = Potentiometer(MuxAnal, 0, 1);
-auto Pot2 = Potentiometer(MuxAnal, 1, 1);
-auto Pot3 = Potentiometer(MuxAnal, 2, 1);
+const auto Pot1 = Potentiometer(MuxAnal, 0, 1);
+const auto Pot2 = Potentiometer(MuxAnal, 1, 1);
+const auto Pot3 = Potentiometer(MuxAnal, 2, 1);
 
 Potentiometer ListPotMux[] {Pot1,Pot2,Pot3};
 const int NUMPOTMUX = 3;
+//*******************************************************************
+
+//***DEFINE REFERENCE OCTAVE*************************
+//
+short OCTAVE = 5;
 //*******************************************************************
 
 
@@ -132,11 +137,11 @@ void setup() {
 	// MIDI.setHandleContinue(handleContinue);
 	// MIDI.setHandleClock(handleClock);
   
-	// MIDI.begin(1);
+	 MIDI.begin(1);
 // If Arduino Uno / Mega
 //  Serial.begin(38400);
 	//disable midi throuput
-	// MIDI.turnThruOff();
+	MIDI.turnThruOff();
   Serial.begin(9600);
 }
 
@@ -150,9 +155,10 @@ void loop() {
   }
   for (int i = 0; i < NUMKEYMUX; i++){
     keyprint(ListKeyMux[i]);
+    midisendkey(ListKeyMux[i],i,OCTAVE,127,1);
   }
   for (int i = 0; i < NUMKEY; i++){
-    keyprint(ListKey[i]);
+    midisendkey(ListKeyMux[i],i,OCTAVE,127,1);
   }
   for (int i = 0; i < NUMPOTMUX; i++){
     potprint(ListPotMux[i]);
@@ -214,6 +220,21 @@ void keyprint(Key MyKey) {
     }
     case Key::Event::Hold: {
       Serial.println("Hold");
+    }
+  }
+}
+
+void midisendkey(Key MyKey, int MyNote, short MyOctave, int MyVelocity, int MyChannel) {
+  // check the button status
+  const auto event = MyKey.check();
+  switch(event) {
+    case Key::Event::Down: {
+      // C1 Midi number is 24, there is 12 notes per octave so we multiply 12 with MyOctave to move the value
+      // we also add 11 because the first key is 1 so 1+11=12 and 12*MyOctave=12*1=12 12+12=24 so C1
+      MIDI.sendNoteOn(12 * MyOctave + 11 + MyNote, MyVelocity, MyChannel);
+    }
+    case Key::Event::Up: {
+      MIDI.sendNoteOff(12 * MyOctave + 11 + MyNote, MyVelocity, MyChannel);
     }
   }
 }
