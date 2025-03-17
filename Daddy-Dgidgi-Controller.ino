@@ -294,10 +294,20 @@ void midisendcc(Potentiometer MyPot, int MyCC, byte MyChannel) {
   }
 }
 
-void setvolume(Potentiometer MyPot, byte MyVolChannel){
+void setvolume(Potentiometer MyPot, byte MyChannel){
   // check the button status
   if (MyPot.check() == Potentiometer::Event::Changed){
-    MyVolChannel = MyPot.read()*2;
+    LISTVOLCHANNEL[MyChannel+1] = MyPot.read();
+  }
+}
+
+void updatevolume(Potentiometer MyPot, byte MyChannel){
+  // check the button status
+  if (MyPot.check() == Potentiometer::Event::Changed){
+    if (MyPot.read() > LISTVOLCHANNEL[MyChannel+1] - 10 || MyPot.read() < LISTVOLCHANNEL[MyChannel+1] + 10) {
+      LISTVOLCHANNEL[MyChannel+1] = MyPot.read();
+      MIDI.sendControlChange(7, MyPot.read(), MyChannel);
+    }
   }
 }
 
