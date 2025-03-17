@@ -158,6 +158,11 @@ byte CLOCK_COUNT = 1;
 
 //*******************************************************************
 
+//***DEFINE THE MENU ID *********************************************
+//
+uint8_t MENU = 1;
+
+//*******************************************************************
 
 
 void setup() {
@@ -183,7 +188,7 @@ void loop() {
   // Clock
   unsigned long MillisCurrent = millis();
   if (MillisCurrent - MILLISPREV >= BPMINTERVAL) {
-      MILLISPREV = MillisCurrent; // Met à jour le dernier envoi
+      MILLISPREV = MillisCurrent; // Update the last value
       MIDI.sendClock();
   }  
   //*************************************
@@ -330,5 +335,14 @@ void setbpm(int MyValue){
   if (BPM > 50 && BPM < 300){
     BPM = BPM + MyValue;
     BPMINTERVAL = 60000 / (BPM * 24);
+  }
+}
+
+void menumove(bool Increment,byte MyValue){
+  if (Increment == true){
+    MENU = MENU + MyValue;
+  }
+  else {
+    MENU = MyValue;
   }
 }
