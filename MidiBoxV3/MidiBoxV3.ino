@@ -43,9 +43,8 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 const auto Button1 = Button(6);
 const auto Button2 = Button(7);
-const auto Button3 = Button(8);
-Button ListButton[] {Button1,Button2,Button3};
-const int NUMBUTTON = 3;
+Button ListButton[] {Button1,Button2};
+const int NUMBUTTON = 2;
 
 //*******************************************************************
 
@@ -80,24 +79,31 @@ byte CHANNEL = 1;
 
 //***DEFINE CC + CHANNEL*************************
 //
-int LISTCONTROL[NUMPOTMUX][2] = {
-  {74,1},
-  {71,1},
-  {74,2},
-  {71,2},
-  {74,3},
-  {71,3},
-  {74,4},
-  {71,4},
-  {74,5},
-  {71,5},
-  {74,6},
-  {71,6},
-  {74,7},
-  {71,7},
-  {74,8},
-  {71,8}
+int LISTCONTROL[NUMPOTMUX][5] = {
+  {1,74,7,19,91},
+  {1,71,16,80,94},
+  {2,74,7,19,91},
+  {2,71,16,80,94},
+  {3,74,7,19,91},
+  {3,71,16,80,94},
+  {4,74,7,19,91},
+  {4,71,16,80,94},
+  {5,74,7,19,91},
+  {5,71,16,80,94},
+  {6,74,7,19,91},
+  {6,71,16,80,94},
+  {7,74,7,19,91},
+  {7,71,16,80,94},
+  {8,74,7,19,91},
+  {8,71,16,80,94}
 };
+//*******************************************************************
+
+//***DEFINE CC + CHANNEL*************************
+//
+bool ALT1 = false;
+bool ALT2 = false;
+//*******************************************************************
 
 //***DEFINE LED FOR MIDI INPUT***************************************
 // useful if you want visual return
@@ -142,11 +148,24 @@ void loop() {
 
   //*************************************
   // Check Controls
-  for (int i = 0; i < NUMBUTTON; i++){
-    buttonprint(ListButton[i]);
-  }
+
+  // Buttons
+  buttonalt(Button1, ALT1);
+  buttonalt(Button2, ALT2);
+
   for (int i = 0; i < NUMPOTMUX; i++){
-    midisendcc(ListPotMux[i],LISTCONTROL[i][0],LISTCONTROL[i][1]);
+    if (ALT1 == false && ALT2 == false){
+      midisendcc(ListPotMux[i],LISTCONTROL[i][1],LISTCONTROL[i][0]);
+    }
+    else if (ALT1 == true && ALT2 == false){
+      midisendcc(ListPotMux[i],LISTCONTROL[i][2],LISTCONTROL[i][0]);
+    }
+    else if (ALT1 == false && ALT2 == true){
+      midisendcc(ListPotMux[i],LISTCONTROL[i][3],LISTCONTROL[i][0]);
+    }
+    else if (ALT1 == true && ALT2 == true){
+      midisendcc(ListPotMux[i],LISTCONTROL[i][4],LISTCONTROL[i][0]);
+    }
   }
   //*************************************
 
@@ -158,27 +177,14 @@ void loop() {
 //************ FUNCTIONS *****************************************************************
 //****************************************************************************************
 
-void buttonprint(Button MyButton) {
-  // check the button status
+void buttonalt(Button MyButton, bool MyAlt){
   const auto event = MyButton.check();
-  switch(event) {
-    case Button::Event::Down: {
-      Serial.println("Down");
+  if (event == Button::Event::Click){
+    if (MyAlt){
+      MyAlt = false;
     }
-    case Button::Event::Up: {
-      Serial.println("Up");
-    }
-    case Button::Event::Click: {
-      Serial.println("Click");
-    }
-    case Button::Event::Press: {
-      Serial.println("Press");
-    }
-    case Button::Event::ClickClick: {
-      Serial.println("ClickClick");
-    }
-    case Button::Event::ClickPress: {
-      Serial.println("ClickPress");
+    else {
+      MyAlt = true;
     }
   }
 }

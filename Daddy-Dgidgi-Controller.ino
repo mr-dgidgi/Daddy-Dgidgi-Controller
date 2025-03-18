@@ -2,6 +2,7 @@
 // #include <MIDI.h>
 #include <USB-MIDI.h>
 #include <Controlino.h>
+#include "AudioSlice.h"
 
 using namespace controlino;
 
@@ -245,6 +246,18 @@ void buttonprint(Button MyButton) {
     }
     case Button::Event::ClickPress: {
       Serial.println("ClickPress");
+    }
+  }
+}
+
+void buttonalt(Button MyButton, bool MyAlt){
+  const auto event = MyButton.check();
+  if (event == Button::Event::Click){
+    if (MyAlt){
+      MyAlt = false;
+    }
+    else {
+      MyAlt = true;
     }
   }
 }
