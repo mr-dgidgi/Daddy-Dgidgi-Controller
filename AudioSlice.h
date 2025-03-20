@@ -9,22 +9,25 @@ using namespace controlino;
 class AudioSlice 
 {
   public:
-    AudioSlice(Button Mute,Button FilterType,Button LFORouting,Button Select,Potentiometer LFO,Potentiometer CutOff,Potentiometer Resonance,Potentiometer Volume,uint8_t Channel);
-    Button ButMute;
-    Button ButFilterType;
-    Button ButLFORouting;
-    Button ButSelect;
-    Potentiometer PotLFO;
-    Potentiometer PotCutOff;
-    Potentiometer PotResonance;
-    Potentiometer PotVolume;
+    AudioSlice(Button* Mute,Button* FilterType,Button* LFORouting,Button* Select,Potentiometer* LFO,Potentiometer* CutOff,Potentiometer* Resonance,Potentiometer* Volume,uint8_t Channel);
+    AudioSlice(Button* Mute,Button* FilterType,Button* LFORouting,Button* Select,Potentiometer* LFO,Potentiometer* CutOff,Potentiometer* Resonance,Potentiometer* Volume,uint8_t Channel, byte LedMute, byte LedSelect);
+    Button* ButMute;
+    Button* ButFilterType;
+    Button* ButLFORouting;
+    Button* ButSelect;
+    Potentiometer* PotLFO;
+    Potentiometer* PotCutOff;
+    Potentiometer* PotResonance;
+    Potentiometer* PotVolume;
     uint8_t Channel;
-  private:
-    uint8_t _volume;
-    uint8_t _resonance;
-    uint8_t _cutoff;
-    int8_t _lfo;
-    bool _mute;
-    bool _select;
+    uint8_t VolumeVal;
+    uint8_t ResonanceVal;
+    uint8_t CutoffVal;
+    uint8_t LfoVal;
+    uint8_t FilterType;
+    bool MuteVal;
+    bool SelectVal;
+    byte LedMute;
+    byte LedSelect;
 };
 #endif

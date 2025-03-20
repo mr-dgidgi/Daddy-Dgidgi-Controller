@@ -30,16 +30,20 @@ USBMIDI_CREATE_DEFAULT_INSTANCE();
   const Pin M2 = 4;
   const Pin M3 = 5;
   // Pin for Mux Digital Signal
-  const Pin SigDigi = 6;
+  const Pin SigDigi1 = 6;
+  const Pin SigDigi2 = 7;
   // Pin for Mux Analog Signal
-  const Pin SigAnal = A1;
+  const Pin SigAnal1 = A1;
+  const Pin SigAnal2 = A2;
 
   //Declare Mux Selector
   auto MuxSelector = Selector(M0,M1,M2,M3);
   // Digital Mux
-  auto MuxDigi = Multiplexer(SigDigi,MuxSelector);
+  auto MuxDigi1 = Multiplexer(SigDigi1,MuxSelector);
+  auto MuxDigi2 = Multiplexer(SigDigi2,MuxSelector);
   // Analog Mux
-  auto MuxAnal = Multiplexer(SigAnal,MuxSelector);
+  auto MuxAnal1 = Multiplexer(SigAnal1,MuxSelector);
+  auto MuxAnal2 = Multiplexer(SigAnal2,MuxSelector);
 //*******************************************************************
 
 //****************************************************************************************
@@ -58,12 +62,17 @@ const int NUMBUTTON = 0;
 //***DEFINE  BUTTONS CONNECTED TO MULTIPLEXER*************************
 //
 
-const auto Button1 = Button(MuxDigi, 0);
-const auto Button2 = Button(MuxDigi, 1);
-const auto Button3 = Button(MuxDigi, 2);
+const auto Button1 = Button(MuxDigi1, 0);
+const auto Button2 = Button(MuxDigi1, 1);
+const auto Button3 = Button(MuxDigi1, 2);
+const auto Button4 = Button(MuxDigi1, 3);
+const auto Button5 = Button(MuxDigi1, 4);
+const auto Button6 = Button(MuxDigi1, 5);
+const auto Button7 = Button(MuxDigi1, 6);
+const auto Button8 = Button(MuxDigi1, 7);
 
-Button ListButtonMux[] {Button1,Button2,Button3};
-const int NUMBUTTONMUX = 3;
+Button ListButtonMux[] {Button1,Button2,Button3,Button4,Button5,Button6,Button7,Button8};
+const int NUMBUTTONMUX = 8;
 //*******************************************************************
 
 //***DEFINE DIRECTLY CONNECTED KEYS*******************************
@@ -78,12 +87,12 @@ const int NUMKEY = 0;
 //***DEFINE  KEYS CONNECTED TO MULTIPLEXER*************************
 //
 
-const auto Key1 = Key(MuxDigi, 3);
-const auto Key2 = Key(MuxDigi, 4);
-const auto Key3 = Key(MuxDigi, 5);
+// const auto Key1 = Key(MuxDigi, 3);
+// const auto Key2 = Key(MuxDigi, 4);
+// const auto Key3 = Key(MuxDigi, 5);
 
-Key ListKeyMux[] {Key1,Key2,Key3};
-const int NUMKEYMUX = 3;
+Key ListKeyMux[] {};
+const int NUMKEYMUX = 0;
 //*******************************************************************
 
 //***DEFINE DIRECTLY CONNECTED POTS*******************************
@@ -98,12 +107,17 @@ const int NUMPOT = 0;
 //***DEFINE POTS CONNECTED TO MULTIPLEXER*************************
 //
 
-const auto Pot1 = Potentiometer(MuxAnal, 0, 1);
-const auto Pot2 = Potentiometer(MuxAnal, 1, 1);
-const auto Pot3 = Potentiometer(MuxAnal, 2, 1);
+const auto Pot1 = Potentiometer(MuxAnal1, 0, 1);
+const auto Pot2 = Potentiometer(MuxAnal1, 1, 1);
+const auto Pot3 = Potentiometer(MuxAnal1, 2, 1);
+const auto Pot4 = Potentiometer(MuxAnal1, 3, 1);
+const auto Pot5 = Potentiometer(MuxAnal1, 4, 1);
+const auto Pot6 = Potentiometer(MuxAnal1, 5, 1);
+const auto Pot7 = Potentiometer(MuxAnal1, 6, 1);
+const auto Pot8 = Potentiometer(MuxAnal1, 7, 1);
 
-Potentiometer ListPotMux[] {Pot1,Pot2,Pot3};
-const int NUMPOTMUX = 3;
+Potentiometer ListPotMux[] {Pot1,Pot2,Pot3,Pot4,Pot5,Pot6,Pot7,Pot8};
+const int NUMPOTMUX = 8;
 //*******************************************************************
 
 //***DEFINE REFERENCE OCTAVE*************************
@@ -123,25 +137,13 @@ int BPMINTERVAL = 60000 / (BPM * 24);
 unsigned long MILLISPREV = 0;
 //*******************************************************************
 
-//***DEFINE EACH CHANNEL VOLUME*************************
+//***DEFINE EACH AUDIO SLICE ****************************************
 //
-byte VOLCHANNEL1 = 0;
-byte VOLCHANNEL2 = 0;
-byte VOLCHANNEL3 = 0;
-byte VOLCHANNEL4 = 0;
-byte VOLCHANNEL5 = 0;
-byte VOLCHANNEL6 = 0;
-byte VOLCHANNEL7 = 0;
-byte VOLCHANNEL8 = 0;
-byte VOLCHANNEL9 = 0;
-byte VOLCHANNEL10 = 0;
-byte VOLCHANNEL11 = 0;
-byte VOLCHANNEL12 = 0;
-byte VOLCHANNEL13 = 0;
-byte VOLCHANNEL14 = 0;
-byte VOLCHANNEL15 = 0;
-byte VOLCHANNEL16 = 0;
-byte LISTVOLCHANNEL[] {VOLCHANNEL1,VOLCHANNEL2,VOLCHANNEL3,VOLCHANNEL4,VOLCHANNEL5,VOLCHANNEL6,VOLCHANNEL7,VOLCHANNEL8,VOLCHANNEL9,VOLCHANNEL10,VOLCHANNEL11,VOLCHANNEL12,VOLCHANNEL13,VOLCHANNEL14,VOLCHANNEL15,VOLCHANNEL16};
+AudioSlice Slice1 = AudioSlice(&Button1,&Button2,&Button3,&Button4,&Pot1,&Pot2,&Pot3,&Pot4,1);
+AudioSlice Slice2 = AudioSlice(&Button5,&Button6,&Button7,&Button8,&Pot5,&Pot6,&Pot7,&Pot8,2);
+AudioSlice LISTAUDIOSLICE[] {Slice1,Slice2};
+uint8_t NUMAUDIOSLICE = 2;
+
 //*******************************************************************
 
 //***DEFINE LED FOR MIDI INPUT***************************************
@@ -195,26 +197,26 @@ void loop() {
   //*************************************
 
   //*************************************
-  // Check Controls
-  for (int i = 0; i < NUMBUTTONMUX; i++){
-    buttonprint(ListButtonMux[i]);
+  // Check each slice
+  for ( uint8_t i = 0; i < NUMAUDIOSLICE; i++){
+    // Cutoff potentiometer
+    midisendcc(LISTAUDIOSLICE[i].PotCutOff,74,&LISTAUDIOSLICE[i].CutoffVal,LISTAUDIOSLICE[i].Channel);
+    // Resonance potentiometer
+    midisendcc(LISTAUDIOSLICE[i].PotResonance,71,&LISTAUDIOSLICE[i].ResonanceVal,LISTAUDIOSLICE[i].Channel);
+    // LFO potentiometer
+    midisendcc(LISTAUDIOSLICE[i].PotLFO,16,&LISTAUDIOSLICE[i].LfoVal,LISTAUDIOSLICE[i].Channel);
+    // Volume potentiometer
+    midisendcc(LISTAUDIOSLICE[i].PotVolume,7,&LISTAUDIOSLICE[i].VolumeVal,LISTAUDIOSLICE[i].Channel);
+    // Mute button
+    buttonmute(LISTAUDIOSLICE[i].ButMute,&LISTAUDIOSLICE[i].MuteVal,LISTAUDIOSLICE[i].Channel);
+    // Select button
+    buttonselect(LISTAUDIOSLICE[i].ButSelect,&LISTAUDIOSLICE[i].SelectVal,LISTAUDIOSLICE[i].Channel);
+    // Filter button
+    buttonfilter(LISTAUDIOSLICE[i].ButFilterType,&LISTAUDIOSLICE[i].FilterType,LISTAUDIOSLICE[i].Channel);
+    // LFO button
+    buttonlfo(LISTAUDIOSLICE[i].ButLFORouting,LISTAUDIOSLICE[i].Channel);
   }
-  for (int i = 0; i < NUMBUTTON; i++){
-    buttonprint(ListButton[i]);
-  }
-  for (int i = 0; i < NUMKEYMUX; i++){
-    keyprint(ListKeyMux[i]);
-    midisendkey(ListKeyMux[i],i,OCTAVE,127,1);
-  }
-  for (int i = 0; i < NUMKEY; i++){
-    midisendkey(ListKeyMux[i],i,OCTAVE,127,1);
-  }
-  for (int i = 0; i < NUMPOTMUX; i++){
-    potprint(ListPotMux[i]);
-  }
-  for (int i = 0; i < NUMPOT; i++){
-    potprint(ListPot[i]);
-  }
+
   //*************************************
 
 	MIDI.read();
@@ -262,6 +264,59 @@ void buttonalt(Button MyButton, bool MyAlt){
   }
 }
 
+void buttonmute(Button* MyButton, bool* MuteStatus, uint8_t MyChannel){
+  const auto event = MyButton->check();
+  if (event == Button::Event::Click){
+    if (*MuteStatus == true){
+      byte SysexMute[] {0xf0,0x41,0x10,0x00,0x00,0x1b,0x12,0x38,0x01,0x00,0x00,0x4a,0xf7};
+      SysexMute[8] = MyChannel;
+      *MuteStatus = false;
+      MIDI.sendSysEx(13,*SysexMute, false);
+    }
+    else {
+      byte SysexUnmute[] {0xf0,0x41,0x10,0x00,0x00,0x1b,0x12,0x38,0x01,0x00,0x01,0x49,0xf7};
+      SysexUnmute[8] = MyChannel;
+      *MuteStatus = true;
+      MIDI.sendSysEx(13,*SysexUnmute, false);
+    }
+  }
+}
+
+void buttonselect(Button* MyButton, bool* SelectStatus, uint8_t MyChannel){
+  const auto event = MyButton->check();
+  if (event == Button::Event::Click){
+    if (*SelectStatus == true){
+      *SelectStatus = false;
+    }
+    else {
+      *SelectStatus = true;
+    }
+  }
+}
+
+void buttonfilter(Button* MyButton, uint8_t* MyFilterType, uint8_t MyChannel){
+  const auto event = MyButton->check();
+  if (event == Button::Event::Click){
+    if (MyFilterType == 4){
+      *MyFilterType = 0;
+      //affiche temporairement le filtre dans le menu lcd
+    }
+    else {
+      (*MyFilterType)++;
+    }
+  }
+  else if (event == Button::Event::Press){
+    //display menu on LCD
+  }
+}
+
+void buttonlfo(Button* MyButton, uint8_t MyChannel){
+  const auto event = MyButton->check();
+  if (event == Button::Event::Click){
+    //affiche le menu lfo dans sur le LCD
+  }
+}
+
 void keyprint(Key MyKey) {
   // check the button status
   const auto event = MyKey.check();
@@ -278,7 +333,7 @@ void keyprint(Key MyKey) {
   }
 }
 
-void midisendkey(Key MyKey, int MyNote, byte MyOctave, int MyVelocity, byte MyChannel) {
+void midisendkey(Key MyKey, int MyNote, byte MyOctave, int MyVelocity, uint8_t MyChannel) {
   // check the button status
   const auto event = MyKey.check();
   switch(event) {
@@ -300,27 +355,11 @@ void potprint(Potentiometer MyPot) {
   }
 }
 
-void midisendcc(Potentiometer MyPot, int MyCC, byte MyChannel) {
+void midisendcc(Potentiometer* MyPot, uint8_t MyCC, uint8_t* MyValue, uint8_t MyChannel) {
   // check the button status
-  if (MyPot.check() == Potentiometer::Event::Changed){
-    MIDI.sendControlChange(MyCC, MyPot.read(), MyChannel);
-  }
-}
-
-void setvolume(Potentiometer MyPot, byte MyChannel){
-  // check the button status
-  if (MyPot.check() == Potentiometer::Event::Changed){
-    LISTVOLCHANNEL[MyChannel+1] = MyPot.read();
-  }
-}
-
-void updatevolume(Potentiometer MyPot, byte MyChannel){
-  // check the button status
-  if (MyPot.check() == Potentiometer::Event::Changed){
-    if (MyPot.read() > LISTVOLCHANNEL[MyChannel+1] - 10 || MyPot.read() < LISTVOLCHANNEL[MyChannel+1] + 10) {
-      LISTVOLCHANNEL[MyChannel+1] = MyPot.read();
-      MIDI.sendControlChange(7, MyPot.read(), MyChannel);
-    }
+  if (MyPot->check() == Potentiometer::Event::Changed){
+    *MyValue = MyPot->read();
+    MIDI.sendControlChange(MyCC, *MyValue, MyChannel);
   }
 }
 
